@@ -1,36 +1,225 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 AI Campaign Studio
 
-## Getting Started
+An AI-powered marketing campaign platform that helps marketers create, manage, and launch campaign experiences from a single interface.
 
-First, run the development server:
+## 📌 Project Overview
+
+AI Campaign Studio enables marketers to:
+
+- Create marketing campaigns
+- Generate AI-powered campaign content
+- Publish campaign landing pages
+- Capture customer leads
+- Manage campaigns from a centralized dashboard
+
+This project is being built as part of a Full Stack Software Engineer assignment.
+
+---
+
+## ✨ Features
+
+### ✅ Campaign Management
+- Create campaigns
+- Edit campaigns
+- Delete campaigns
+- View all campaigns
+
+### 🤖 AI Content Generation
+- Campaign Headlines
+- Ad Copy
+- Landing Page Content
+- Call-To-Actions
+- Social Media Captions
+
+### 📄 Landing Pages
+- Hero Section
+- Product Overview
+- Benefits
+- Testimonials
+- Contact Form
+
+### 📩 Lead Management
+- Lead Capture
+- Demo Requests
+- Consultation Requests
+- Waitlist Registration
+
+### 📊 Dashboard
+- Campaign List
+- Lead Management
+- Campaign Analytics
+- Search Campaigns
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- Next.js 15
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+
+### Backend
+- Next.js API Routes
+- Prisma ORM
+
+### Database
+- PostgreSQL
+
+### AI
+- Google Gemini API *(Planned)*
+
+### Deployment
+- Vercel *(Planned)*
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+│
+├── app/
+│   ├── api/
+│   ├── dashboard/
+│   └── page.tsx
+│
+├── components/
+│
+├── lib/
+│   └── prisma.ts
+│
+├── services/
+│
+└── types/
+
+prisma/
+│
+├── migrations/
+└── schema.prisma
+```
+
+---
+
+## 🗄️ Database
+
+Current database model:
+
+### Campaign
+
+| Field | Type |
+|--------|------|
+| id | String |
+| campaignName | String |
+| brandName | String |
+| productName | String |
+| campaignGoal | String |
+| targetAudience | String |
+| createdAt | DateTime |
+| updatedAt | DateTime |
+
+Future models:
+
+- User
+- Lead
+- AIContent
+- Analytics
+
+---
+
+## 🚀 Getting Started
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/ai_campaign_studio"
+```
+
+### Run Database Migration
+
+```bash
+npx prisma migrate dev
+```
+
+### Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### Start Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📌 Development Progress
 
-To learn more about Next.js, take a look at the following resources:
+### ✅ Completed
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js Setup
+- PostgreSQL Setup
+- Prisma ORM Integration
+- Campaign Database Model
+- Create Campaign API
+- Get Campaign API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 🚧 In Progress
 
-## Deploy on Vercel
+- Campaign Dashboard
+- Landing Page Builder
+- AI Content Generation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 📅 Planned
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Authentication
+- Lead Capture
+- Analytics Dashboard
+- AI Image Generation
+- Deployment
+
+---
+
+## 📷 Screenshots
+
+*(Will be added during development.)*
+
+---
+
+## 👨‍💻 Author
+
+**Nishant**
+
+Software Engineer | Full Stack Developer
+
+GitHub: [https://github.com/<your-github-username>](https://github.com/Iam-NishantChauhan)
+
+---
+
+## 📄 License
+
+This project is created for evaluation purposes as part of a Full Stack Engineering assignment.
