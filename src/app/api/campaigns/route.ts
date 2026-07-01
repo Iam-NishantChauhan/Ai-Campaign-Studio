@@ -25,3 +25,16 @@ export async function POST(request: Request) {
     );
   }
 }
+export async function GET() {
+  try {
+    const campaigns = await prisma.campaign.findMany();
+
+    return NextResponse.json(campaigns);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: "Something went wrong" },
+      { status: 500 }
+    );
+  }
+}
