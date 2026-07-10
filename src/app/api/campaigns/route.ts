@@ -12,6 +12,7 @@ export async function POST(request: Request) {
             productName: body.productName,
             campaignGoal: body.campaignGoal,
             targetAudience: body.targetAudience,
+            budget: body.budget,
         },
     });
 
