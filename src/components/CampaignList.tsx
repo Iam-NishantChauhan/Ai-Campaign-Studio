@@ -42,6 +42,7 @@ export default function CampaignList() {
           id={campaign.id}
           campaignName={campaign.campaignName}
           brandName={campaign.brandName}
+          productName={campaign.productName}
           campaignGoal={campaign.campaignGoal}
           targetAudience={campaign.targetAudience}
           budget={campaign.budget}

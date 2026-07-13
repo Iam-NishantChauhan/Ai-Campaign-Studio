@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,7 +20,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function CreateCampaignDialog() {
+type Campaign = {
+  id: string;
+  campaignName: string;
+  brandName: string;
+  productName: string;
+  campaignGoal: string;
+  targetAudience: string;
+  budget: number;
+};
+
+type CreateCampaignDialogProps = {
+  campaign?: Campaign;
+  trigger?: React.ReactNode;
+};
+
+export default function CreateCampaignDialog({
+  campaign,
+  trigger,
+}: CreateCampaignDialogProps) {
+  const [open, setOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -27,26 +48,69 @@ export default function CreateCampaignDialog() {
     formState: { errors, isSubmitting },
   } = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
+    defaultValues: {
+      campaignName: "",
+      brandName: "",
+      productName: "",
+      campaignGoal: "",
+      targetAudience: "",
+      budget: 0,
+    },
   });
+
+  useEffect(() => {
+    if (campaign) {
+      reset({
+        campaignName: campaign.campaignName,
+        brandName: campaign.brandName,
+        productName: campaign.productName,
+        campaignGoal: campaign.campaignGoal,
+        targetAudience: campaign.targetAudience,
+        budget: campaign.budget,
+      });
+    } else {
+      reset({
+        campaignName: "",
+        brandName: "",
+        productName: "",
+        campaignGoal: "",
+        targetAudience: "",
+        budget: 0,
+      });
+    }
+  }, [campaign, reset]);
 
   async function onSubmit(data: CampaignFormData) {
     try {
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        campaign
+          ? `/api/campaigns/${campaign.id}`
+          : "/api/campaigns",
+        {
+          method: campaign ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to create campaign");
+        throw new Error(
+          campaign
+            ? "Failed to update campaign"
+            : "Failed to create campaign"
+        );
       }
 
-      alert("Campaign Created Successfully!");
+      alert(
+        campaign
+          ? "Campaign Updated Successfully!"
+          : "Campaign Created Successfully!"
+      );
 
+      setOpen(false);
       reset();
-
       window.location.reload();
     } catch (error) {
       console.error(error);
@@ -55,14 +119,16 @@ export default function CreateCampaignDialog() {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ New Campaign</Button>
+        {trigger ?? <Button>+ New Campaign</Button>}
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Create Campaign</DialogTitle>
+          <DialogTitle>
+            {campaign ? "Edit Campaign" : "Create Campaign"}
+          </DialogTitle>
         </DialogHeader>
 
         <form
@@ -129,7 +195,13 @@ export default function CreateCampaignDialog() {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating..." : "Create Campaign"}
+            {isSubmitting
+              ? campaign
+                ? "Updating..."
+                : "Creating..."
+              : campaign
+              ? "Update Campaign"
+              : "Create Campaign"}
           </Button>
         </form>
       </DialogContent>
