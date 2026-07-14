@@ -13,13 +13,30 @@ datasource db {
 }
 
 model Campaign {
-  id             String   @id @default(cuid())
-  campaignName   String
-  brandName      String
-  productName    String
-  campaignGoal   String
-  targetAudience String
-  budget         Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String   @id @default(cuid())
+
+  campaignName     String
+  brandName        String
+  productName      String
+  campaignGoal     String
+  targetAudience   String
+  budget           Int      @default(0)
+
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+
+  campaigns Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
