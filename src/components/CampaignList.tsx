@@ -13,6 +13,11 @@ export default function CampaignList() {
       try {
         const response = await fetch("/api/campaigns");
 
+        // User is not logged in
+        if (response.status === 401) {
+          return;
+        }
+
         if (!response.ok) {
           throw new Error("Failed to fetch campaigns");
         }

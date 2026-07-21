@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
@@ -7,6 +8,35 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const campaign = await prisma.campaign.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!campaign) {
+      return NextResponse.json(
+        { message: "Campaign not found" },
+        { status: 404 }
+      );
+    }
+
+    if (campaign.userId !== user.id) {
+      return NextResponse.json(
+        { message: "Forbidden" },
+        { status: 403 }
+      );
+    }
 
     await prisma.campaign.delete({
       where: {
@@ -34,6 +64,15 @@ export async function PUT(
   try {
     const { id } = await params;
 
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     const existingCampaign = await prisma.campaign.findUnique({
@@ -46,6 +85,13 @@ export async function PUT(
       return NextResponse.json(
         { message: "Campaign not found" },
         { status: 404 }
+      );
+    }
+
+    if (existingCampaign.userId !== user.id) {
+      return NextResponse.json(
+        { message: "Forbidden" },
+        { status: 403 }
       );
     }
 
