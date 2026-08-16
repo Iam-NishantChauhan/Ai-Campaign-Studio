@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import CreateCampaignDialog from "./CreateCampaignDialog";
 import { Button } from "./ui/button";
 import { AiContent } from "@/types/campaign";
@@ -171,6 +172,13 @@ export default function CampaignCard({
               value={selectedContent.callToAction}
             />
           </div>
+
+          <Link
+            className="mt-5 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            href={`/dashboard/campaigns/${id}/landing?contentId=${selectedContent.id}`}
+          >
+            Preview landing page
+          </Link>
         </section>
       )}
 
