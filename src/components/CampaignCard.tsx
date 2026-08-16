@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import CreateCampaignDialog from "./CreateCampaignDialog";
 import { Button } from "./ui/button";
+import { AiContent } from "@/types/campaign";
 
 type CampaignCardProps = {
   id: string;
@@ -9,6 +13,7 @@ type CampaignCardProps = {
   campaignGoal: string;
   targetAudience: string;
   budget: number;
+  initialAiContents: AiContent[];
 };
 
 export default function CampaignCard({
@@ -19,7 +24,48 @@ export default function CampaignCard({
   campaignGoal,
   targetAudience,
   budget,
+  initialAiContents,
 }: CampaignCardProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState("");
+  const [aiContents, setAiContents] = useState(initialAiContents);
+  const [selectedContent, setSelectedContent] = useState<AiContent | null>(
+    initialAiContents[0] ?? null,
+  );
+
+  async function generateAiContent() {
+    setIsGenerating(true);
+    setGenerationError("");
+
+    try {
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ campaignId: id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate AI content");
+      }
+
+      setAiContents((currentContents) => [data, ...currentContents]);
+      setSelectedContent(data);
+    } catch (error) {
+      console.error(error);
+      setGenerationError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate AI content",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   async function deleteCampaign() {
     const confirmed = confirm(
       "Are you sure you want to delete this campaign?"
@@ -89,7 +135,73 @@ export default function CampaignCard({
         >
           Delete
         </Button>
+
+        <Button onClick={generateAiContent} disabled={isGenerating}>
+          {isGenerating ? "Generating..." : "Generate AI"}
+        </Button>
       </div>
+
+      {generationError && (
+        <p className="mt-4 text-sm text-red-600" role="alert">
+          {generationError}
+        </p>
+      )}
+
+      {selectedContent && (
+        <section className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 className="text-lg font-semibold">Generated AI content</h3>
+
+          <div className="mt-4 space-y-4 text-gray-700">
+            <ContentField label="Headline" value={selectedContent.headline} />
+            <ContentField
+              label="Instagram caption"
+              value={selectedContent.instagramCaption}
+            />
+            <ContentField
+              label="LinkedIn post"
+              value={selectedContent.linkedinPost}
+            />
+            <ContentField
+              label="Email subject"
+              value={selectedContent.emailSubject}
+            />
+            <ContentField label="Email body" value={selectedContent.emailBody} />
+            <ContentField
+              label="Call to action"
+              value={selectedContent.callToAction}
+            />
+          </div>
+        </section>
+      )}
+
+      {aiContents.length > 1 && (
+        <details className="mt-4 rounded-lg border border-gray-200 p-4">
+          <summary className="cursor-pointer font-semibold">
+            Previous generations ({aiContents.length - 1})
+          </summary>
+
+          <div className="mt-3 space-y-2">
+            {aiContents.slice(1).map((content, index) => (
+              <Button
+                key={content.id}
+                variant="outline"
+                onClick={() => setSelectedContent(content)}
+              >
+                View generation {aiContents.length - index - 1}
+              </Button>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function ContentField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <h4 className="font-semibold">{label}</h4>
+      <p className="mt-1 whitespace-pre-wrap">{value}</p>
     </div>
   );
 }

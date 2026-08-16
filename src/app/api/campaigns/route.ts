@@ -53,6 +53,13 @@ export async function GET() {
       where: {
         userId: user.id,
       },
+      include: {
+        aiContents: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },

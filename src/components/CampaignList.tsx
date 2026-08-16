@@ -51,6 +51,7 @@ export default function CampaignList() {
           campaignGoal={campaign.campaignGoal}
           targetAudience={campaign.targetAudience}
           budget={campaign.budget}
+          initialAiContents={campaign.aiContents}
         />
       ))}
     </div>

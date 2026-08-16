@@ -1,3 +1,15 @@
+export interface AiContent {
+  id: string;
+  headline: string;
+  instagramCaption: string;
+  linkedinPost: string;
+  emailSubject: string;
+  emailBody: string;
+  callToAction: string;
+  campaignId: string;
+  createdAt: string;
+}
+
 export interface Campaign {
   id: string;
   campaignName: string;
@@ -8,4 +20,5 @@ export interface Campaign {
   budget: number;
   createdAt: string;
   updatedAt: string;
+  aiContents: AiContent[];
 }
