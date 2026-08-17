@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { leadSchema } from "@/validations/lead.schema";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(
   request: Request,
@@ -53,6 +54,47 @@ export async function POST(
     return NextResponse.json(
       { error: "Unable to submit your details" },
       { status: 500 },
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const leads = await prisma.lead.findMany({
+      where: {
+        campaign: {
+          userId: user.id,
+        },
+      },
+      include: {
+        campaign: {
+          select: {
+            id: true,
+            campaignName: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(leads);
+  } catch (error) {
+    console.error("Failed to fetch leads:", error);
+
+    return NextResponse.json(
+      { error: "Failed to fetch leads" },
+      { status: 500 }
     );
   }
 }
