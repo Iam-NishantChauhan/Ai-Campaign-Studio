@@ -13,32 +13,45 @@ export async function GET() {
       );
     }
 
-    const totalCampaigns = await prisma.campaign.count({
+    const campaigns = await prisma.campaign.findMany({
       where: {
         userId: user.id,
       },
-    });
-
-    const totalLeads = await prisma.lead.count({
-      where: {
-        campaign: {
-          userId: user.id,
+      select: {
+        id: true,
+        campaignName: true,
+        createdAt: true,
+        _count: {
+          select: {
+            leads: true,
+            aiContents: true,
+          },
         },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    const totalAiGenerations = await prisma.aiContent.count({
-      where: {
-        campaign: {
-          userId: user.id,
-        },
-      },
-    });
+    const totalCampaigns = campaigns.length;
+
+    const totalLeads = campaigns.reduce(
+      (total, campaign) => total + campaign._count.leads,
+      0
+    );
+
+    const totalAiGenerations = campaigns.reduce(
+      (total, campaign) => total + campaign._count.aiContents,
+      0
+    );
 
     return NextResponse.json({
-      totalCampaigns,
-      totalLeads,
-      totalAiGenerations,
+      totals: {
+        campaigns: totalCampaigns,
+        leads: totalLeads,
+        aiGenerations: totalAiGenerations,
+      },
+      campaigns,
     });
   } catch (error) {
     console.error("Analytics error:", error);
