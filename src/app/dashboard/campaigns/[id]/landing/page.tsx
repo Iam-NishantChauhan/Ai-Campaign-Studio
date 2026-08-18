@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import LeadCaptureForm from "@/components/LeadCaptureForm";
+import PageViewTracker from "@/components/PageViewTracker";
+import CtaTracker from "@/components/CtaTracker";
 
 type LandingPageProps = {
   params: Promise<{ id: string }>;
@@ -73,6 +75,7 @@ export default async function CampaignLandingPage({
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
+      <PageViewTracker campaignId={campaign.id} />
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <p className="text-lg font-bold">{campaign.brandName}</p>
         <Link href="/dashboard" className="text-sm font-medium hover:underline">
@@ -91,12 +94,9 @@ export default async function CampaignLandingPage({
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-300">
             Created for {campaign.targetAudience}.
           </p>
-          <a
-            href="#campaign-email"
-            className="mt-8 inline-flex rounded-md bg-white px-5 py-3 font-semibold text-slate-900 hover:bg-slate-200"
-          >
-            {content.callToAction}
-          </a>
+          <CtaTracker campaignId={campaign.id}>
+  {content.callToAction}
+</CtaTracker>
         </div>
       </section>
 
@@ -140,7 +140,9 @@ function ContentPanel({ title, text }: { title: string; text: string }) {
   return (
     <article className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-slate-200">
       <h2 className="text-xl font-bold">{title}</h2>
-      <p className="mt-4 whitespace-pre-wrap leading-7 text-slate-700">{text}</p>
+      <p className="mt-4 whitespace-pre-wrap leading-7 text-slate-700">
+        {text}
+      </p>
     </article>
   );
 }

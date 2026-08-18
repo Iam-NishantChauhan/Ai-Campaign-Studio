@@ -26,6 +26,7 @@ model Campaign {
 
   aiContents       AiContent[]
   leads            Lead[]
+  analyticsEvents AnalyticsEvent[]
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -63,6 +64,16 @@ model Lead {
   id         String   @id @default(cuid())
   name       String
   email      String
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventType  String
 
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)

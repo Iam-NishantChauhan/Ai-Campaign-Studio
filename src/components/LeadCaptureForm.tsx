@@ -24,12 +24,15 @@ export default function LeadCaptureForm({
     const formData = new FormData(form);
 
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}/leads`, {
+      const response = await fetch("/api/leads", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: formData.get("name"),
           email: formData.get("email"),
+          campaignId,
         }),
       });
       const data = await response.json();
@@ -44,7 +47,9 @@ export default function LeadCaptureForm({
     } catch (error) {
       setIsSuccess(false);
       setMessage(
-        error instanceof Error ? error.message : "Unable to submit your details",
+        error instanceof Error
+          ? error.message
+          : "Unable to submit your details",
       );
     } finally {
       setIsSubmitting(false);
@@ -83,7 +88,12 @@ export default function LeadCaptureForm({
       </button>
 
       {message && (
-        <p className={isSuccess ? "text-sm text-green-700" : "text-sm text-red-700"} role="status">
+        <p
+          className={
+            isSuccess ? "text-sm text-green-700" : "text-sm text-red-700"
+          }
+          role="status"
+        >
           {message}
         </p>
       )}
