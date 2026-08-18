@@ -2,7 +2,7 @@
 
 AI Campaign Studio is a full-stack AI-powered marketing platform for creating campaigns, generating marketing content, publishing campaign-specific landing pages, capturing leads, and viewing campaign analytics.
 
-[📊 View Project Presentation](./docs/AI-Campaign-Studio-Presentation.pptx)
+[📊 View Project Presentation](./public/docs/AI-Campaign-Studio-Presentation.pptx)
 
 The project demonstrates an end-to-end workflow:
 
