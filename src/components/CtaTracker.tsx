@@ -28,9 +28,9 @@ export default function CtaTracker({
 
   return (
     <a
-      href="#campaign-email"
+      href="#lead-form"
       onClick={handleClick}
-      className="mt-8 inline-flex rounded-md bg-white px-5 py-3 font-semibold text-slate-900 hover:bg-slate-200"
+      className="mt-8 inline-flex items-center rounded-xl bg-white px-6 py-3.5 font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-indigo-50"
     >
       {children}
     </a>
