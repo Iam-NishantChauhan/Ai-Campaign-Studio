@@ -9,17 +9,23 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const router = useRouter();
 
   const handleSignUp = async () => {
     try {
-      setLoading(true);
+      setMessage("");
+      setMessageType("");
 
       if (!name || !email || !password) {
-        alert("Please fill all fields");
+        setMessage("Please fill in all fields.");
+        setMessageType("error");
         return;
       }
+
+      setLoading(true);
 
       const response = await fetch("/api/auth/signup", {
         method: "POST",
@@ -36,15 +42,21 @@ export default function SignUpPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        setMessage(data.message || "Unable to create your account.");
+        setMessageType("error");
         return;
       }
 
-      alert("SignUp Successful!");
-      router.push("/login");
+      setMessage("Account created successfully! Redirecting to login...");
+      setMessageType("success");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1000);
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
+      setMessage("Something went wrong. Please try again.");
+      setMessageType("error");
     } finally {
       setLoading(false);
     }
@@ -129,6 +141,22 @@ export default function SignUpPage() {
                 />
               </div>
 
+              {/* Inline Success / Error Message */}
+              {message && (
+                <div
+                  className={`rounded-xl border px-4 py-3 text-sm ${
+                    messageType === "success"
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : "border-red-500/20 bg-red-500/10 text-red-400"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{messageType === "success" ? "✓" : "⚠"}</span>
+                    <span>{message}</span>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleSignUp}
                 disabled={loading}
@@ -152,8 +180,8 @@ export default function SignUpPage() {
           </div>
 
           <p className="mt-6 text-center text-xs text-slate-600">
-            By creating an account, you can start managing your campaigns,
-            leads and analytics.
+            By creating an account, you can start managing your campaigns, leads
+            and analytics.
           </p>
         </div>
       </section>

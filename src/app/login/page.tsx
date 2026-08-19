@@ -8,17 +8,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
   const router = useRouter();
 
   const handleLogin = async () => {
     try {
-      setLoading(true);
+      setMessage("");
+      setMessageType("");
 
       if (!email || !password) {
-        alert("Please enter your email and password");
+        setMessage("Please enter your email and password.");
+        setMessageType("error");
         return;
       }
+
+      setLoading(true);
 
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -34,15 +40,21 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        setMessage(data.message || "Invalid email or password.");
+        setMessageType("error");
         return;
       }
 
-      alert("Login Successful!");
-      router.push("/dashboard");
+      setMessage("Login successful! Redirecting...");
+      setMessageType("success");
+
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 700);
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
+      setMessage("Something went wrong. Please try again.");
+      setMessageType("error");
     } finally {
       setLoading(false);
     }
@@ -74,9 +86,7 @@ export default function LoginPage() {
               ✦
             </div>
 
-            <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
 
             <p className="mt-2 text-sm text-slate-400">
               Sign in to manage your AI campaigns.
@@ -112,6 +122,22 @@ export default function LoginPage() {
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-slate-500 transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
+
+              {/* Inline Success / Error Message */}
+              {message && (
+                <div
+                  className={`rounded-xl border px-4 py-3 text-sm ${
+                    messageType === "success"
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : "border-red-500/20 bg-red-500/10 text-red-400"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{messageType === "success" ? "✓" : "⚠"}</span>
+                    <span>{message}</span>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={handleLogin}
