@@ -4,16 +4,13 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -36,7 +33,7 @@ export async function GET(
     if (!campaign) {
       return NextResponse.json(
         { error: "Campaign not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -51,19 +48,12 @@ export async function GET(
     });
 
     const pageViews =
-      events.find(
-        (event) => event.eventType === "PAGE_VIEW"
-      )?._count._all ?? 0;
+      events.find((event) => event.eventType === "PAGE_VIEW")?._count._all ?? 0;
 
     const ctaClicks =
-      events.find(
-        (event) => event.eventType === "CTA_CLICK"
-      )?._count._all ?? 0;
+      events.find((event) => event.eventType === "CTA_CLICK")?._count._all ?? 0;
 
-    const leadCaptures =
-      events.find(
-        (event) => event.eventType === "LEAD_CAPTURE"
-      )?._count._all ?? 0;
+    const leadCaptures = campaign._count.leads;
 
     return NextResponse.json({
       id: campaign.id,
@@ -77,14 +67,11 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error(
-      "Failed to fetch campaign analytics:",
-      error
-    );
+    console.error("Failed to fetch campaign analytics:", error);
 
     return NextResponse.json(
       { error: "Failed to fetch campaign analytics" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

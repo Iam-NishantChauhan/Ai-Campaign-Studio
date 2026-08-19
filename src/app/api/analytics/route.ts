@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const ALLOWED_EVENTS = [
-  "PAGE_VIEW",
-  "CTA_CLICK",
-  "LEAD_CAPTURE",
-];
+const ALLOWED_EVENTS = ["PAGE_VIEW", "CTA_CLICK", "LEAD_CAPTURE"];
 
 export async function POST(request: Request) {
   try {
@@ -19,7 +15,7 @@ export async function POST(request: Request) {
         {
           error: "campaignId and eventType are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +24,7 @@ export async function POST(request: Request) {
         {
           error: "Invalid event type",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +42,7 @@ export async function POST(request: Request) {
         {
           error: "Campaign not found",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -62,7 +58,7 @@ export async function POST(request: Request) {
         message: "Event tracked successfully",
         event,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Analytics event error:", error);
@@ -71,7 +67,7 @@ export async function POST(request: Request) {
       {
         error: "Failed to track event",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -81,10 +77,7 @@ export async function GET() {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const campaigns = await prisma.campaign.findMany({
@@ -117,19 +110,14 @@ export async function GET() {
         });
 
         const pageViews =
-          events.find(
-            (event) => event.eventType === "PAGE_VIEW"
-          )?._count._all ?? 0;
+          events.find((event) => event.eventType === "PAGE_VIEW")?._count
+            ._all ?? 0;
 
         const ctaClicks =
-          events.find(
-            (event) => event.eventType === "CTA_CLICK"
-          )?._count._all ?? 0;
+          events.find((event) => event.eventType === "CTA_CLICK")?._count
+            ._all ?? 0;
 
-        const leadCaptures =
-          events.find(
-            (event) => event.eventType === "LEAD_CAPTURE"
-          )?._count._all ?? 0;
+        const leadCaptures = campaign._count.leads;
 
         return {
           id: campaign.id,
@@ -142,30 +130,30 @@ export async function GET() {
             leadCaptures,
           },
         };
-      })
+      }),
     );
 
     const totals = {
       campaigns: campaigns.length,
       leads: campaigns.reduce(
         (total, campaign) => total + campaign._count.leads,
-        0
+        0,
       ),
       aiGenerations: campaigns.reduce(
         (total, campaign) => total + campaign._count.aiContents,
-        0
+        0,
       ),
       pageViews: analytics.reduce(
         (total, campaign) => total + campaign.events.pageViews,
-        0
+        0,
       ),
       ctaClicks: analytics.reduce(
         (total, campaign) => total + campaign.events.ctaClicks,
-        0
+        0,
       ),
       leadCaptures: analytics.reduce(
         (total, campaign) => total + campaign.events.leadCaptures,
-        0
+        0,
       ),
     };
 
@@ -180,7 +168,7 @@ export async function GET() {
       {
         error: "Failed to fetch analytics",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

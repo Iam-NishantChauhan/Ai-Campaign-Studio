@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import {
   campaignSchema,
   CampaignFormData,
@@ -20,7 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type Campaign = {
+import { Campaign } from "@/types/campaign";
+
+type EditableCampaign = {
   id: string;
   campaignName: string;
   brandName: string;
@@ -31,15 +34,27 @@ type Campaign = {
 };
 
 type CreateCampaignDialogProps = {
-  campaign?: Campaign;
+  campaign?: EditableCampaign;
   trigger?: React.ReactNode;
+
+  /**
+   * Called after successful CREATE or UPDATE.
+   * The updated/created campaign is returned.
+   */
+  onSuccess?: (campaign: Campaign) => void;
 };
 
 export default function CreateCampaignDialog({
   campaign,
   trigger,
+  onSuccess,
 }: CreateCampaignDialogProps) {
   const [open, setOpen] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<
+    "success" | "error" | ""
+  >("");
 
   const {
     register,
@@ -48,6 +63,7 @@ export default function CreateCampaignDialog({
     formState: { errors, isSubmitting },
   } = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
+
     defaultValues: {
       campaignName: "",
       brandName: "",
@@ -58,6 +74,13 @@ export default function CreateCampaignDialog({
     },
   });
 
+  /*
+   * Populate form when editing.
+   *
+   * Notice:
+   * We DO NOT call setMessage() or setMessageType()
+   * inside this effect.
+   */
   useEffect(() => {
     if (campaign) {
       reset({
@@ -80,47 +103,117 @@ export default function CreateCampaignDialog({
     }
   }, [campaign, reset]);
 
+  function handleDialogChange(value: boolean) {
+    setOpen(value);
+
+    if (value) {
+      setMessage("");
+      setMessageType("");
+    }
+  }
+
   async function onSubmit(data: CampaignFormData) {
+    setMessage("");
+    setMessageType("");
+
     try {
       const response = await fetch(
-        campaign ? `/api/campaigns/${campaign.id}` : "/api/campaigns",
+        campaign
+          ? `/api/campaigns/${campaign.id}`
+          : "/api/campaigns",
         {
           method: campaign ? "PUT" : "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(data),
         },
       );
 
+      const result = await response.json();
+
       if (!response.ok) {
         throw new Error(
-          campaign ? "Failed to update campaign" : "Failed to create campaign",
+          result.error ||
+            result.message ||
+            (campaign
+              ? "Failed to update campaign"
+              : "Failed to create campaign"),
         );
       }
 
-      alert(
+      /*
+       * IMPORTANT
+       *
+       * Your API should return the created/updated
+       * campaign object.
+       *
+       * Example:
+       *
+       * {
+       *   id,
+       *   campaignName,
+       *   ...
+       *   aiContents: []
+       * }
+       */
+
+      const savedCampaign = result as Campaign;
+
+      setMessage(
         campaign
-          ? "Campaign Updated Successfully!"
-          : "Campaign Created Successfully!",
+          ? "Campaign updated successfully!"
+          : "Campaign created successfully!",
       );
 
-      setOpen(false);
-      reset();
-      window.location.reload();
+      setMessageType("success");
+
+      /*
+       * Update parent state immediately.
+       *
+       * NO window.location.reload()
+       */
+      onSuccess?.(savedCampaign);
+
+      /*
+       * Close dialog after showing success message.
+       */
+      setTimeout(() => {
+        setOpen(false);
+
+        setMessage("");
+        setMessageType("");
+
+        if (!campaign) {
+          reset();
+        }
+      }, 800);
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
+      console.error("Campaign save failed:", error);
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+
+      setMessageType("error");
     }
   }
 
   const inputClass =
     "mt-2 h-11 rounded-lg border-slate-200 bg-slate-50 px-3 text-sm shadow-sm transition focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 
-  const errorClass = "mt-1.5 text-xs font-medium text-red-500";
+  const errorClass =
+    "mt-1.5 text-xs font-medium text-red-500";
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={handleDialogChange}
+    >
       <DialogTrigger asChild>
         {trigger ?? (
           <Button className="rounded-lg bg-indigo-600 px-5 font-semibold shadow-sm hover:bg-indigo-700">
@@ -138,7 +231,9 @@ export default function CreateCampaignDialog({
             </div>
 
             <DialogTitle className="text-2xl font-bold tracking-tight text-slate-900">
-              {campaign ? "Edit Campaign" : "Create Campaign"}
+              {campaign
+                ? "Edit Campaign"
+                : "Create Campaign"}
             </DialogTitle>
 
             <p className="mt-1 text-sm text-slate-500">
@@ -150,8 +245,10 @@ export default function CreateCampaignDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 px-7 py-6">
-          {/* Campaign Information */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-6 px-7 py-6"
+        >
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
               Campaign Information
@@ -171,7 +268,9 @@ export default function CreateCampaignDialog({
                 />
 
                 {errors.campaignName?.message && (
-                  <p className={errorClass}>{errors.campaignName.message}</p>
+                  <p className={errorClass}>
+                    {errors.campaignName.message}
+                  </p>
                 )}
               </div>
 
@@ -188,7 +287,9 @@ export default function CreateCampaignDialog({
                 />
 
                 {errors.brandName?.message && (
-                  <p className={errorClass}>{errors.brandName.message}</p>
+                  <p className={errorClass}>
+                    {errors.brandName.message}
+                  </p>
                 )}
               </div>
 
@@ -205,7 +306,9 @@ export default function CreateCampaignDialog({
                 />
 
                 {errors.productName?.message && (
-                  <p className={errorClass}>{errors.productName.message}</p>
+                  <p className={errorClass}>
+                    {errors.productName.message}
+                  </p>
                 )}
               </div>
 
@@ -222,7 +325,9 @@ export default function CreateCampaignDialog({
                 />
 
                 {errors.campaignGoal?.message && (
-                  <p className={errorClass}>{errors.campaignGoal.message}</p>
+                  <p className={errorClass}>
+                    {errors.campaignGoal.message}
+                  </p>
                 )}
               </div>
 
@@ -239,7 +344,9 @@ export default function CreateCampaignDialog({
                 />
 
                 {errors.targetAudience?.message && (
-                  <p className={errorClass}>{errors.targetAudience.message}</p>
+                  <p className={errorClass}>
+                    {errors.targetAudience.message}
+                  </p>
                 )}
               </div>
 
@@ -265,11 +372,27 @@ export default function CreateCampaignDialog({
                 </div>
 
                 {errors.budget?.message && (
-                  <p className={errorClass}>{errors.budget.message}</p>
+                  <p className={errorClass}>
+                    {errors.budget.message}
+                  </p>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Success / Error Message */}
+          {message && (
+            <div
+              className={`rounded-lg border px-4 py-3 text-sm font-medium ${
+                messageType === "success"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}
+              role="alert"
+            >
+              {message}
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">

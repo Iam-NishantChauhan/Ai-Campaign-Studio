@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import CreateCampaignDialog from "./CreateCampaignDialog";
 import { Button } from "./ui/button";
-import { AiContent } from "@/types/campaign";
+import { AiContent, Campaign } from "@/types/campaign";
 
 type CampaignCardProps = {
   id: string;
@@ -14,7 +14,13 @@ type CampaignCardProps = {
   campaignGoal: string;
   targetAudience: string;
   budget: number;
-  initialAiContents: AiContent[];
+  initialAiContents?: AiContent[];
+
+  // Called after campaign is updated
+  onUpdated?: (campaign: Campaign) => void;
+
+  // Called after campaign is deleted
+  onDeleted?: (campaignId: string) => void;
 };
 
 export default function CampaignCard({
@@ -25,18 +31,33 @@ export default function CampaignCard({
   campaignGoal,
   targetAudience,
   budget,
-  initialAiContents,
+  initialAiContents = [],
+  onUpdated,
+  onDeleted,
 }: CampaignCardProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
-  const [aiContents, setAiContents] = useState(initialAiContents);
-  const [selectedContent, setSelectedContent] = useState<AiContent | null>(
-    initialAiContents[0] ?? null,
-  );
 
-  const [latestContent, setLatestContent] = useState<AiContent | null>(
-    initialAiContents[0] ?? null,
-  );
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+
+  // Make sure AI contents is always an array
+  const safeAiContents = Array.isArray(initialAiContents)
+    ? initialAiContents
+    : [];
+
+  const [aiContents, setAiContents] =
+    useState<AiContent[]>(safeAiContents);
+
+  const [selectedContent, setSelectedContent] =
+    useState<AiContent | null>(safeAiContents[0] ?? null);
+
+  const [latestContent, setLatestContent] =
+    useState<AiContent | null>(safeAiContents[0] ?? null);
+
+  // --------------------------------------------------
+  // Generate AI Content
+  // --------------------------------------------------
 
   async function generateAiContent() {
     setIsGenerating(true);
@@ -48,13 +69,17 @@ export default function CampaignCard({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ campaignId: id }),
+        body: JSON.stringify({
+          campaignId: id,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate AI content");
+        throw new Error(
+          data.error || "Failed to generate AI content",
+        );
       }
 
       setAiContents((current) => [data, ...current]);
@@ -71,26 +96,80 @@ export default function CampaignCard({
     }
   }
 
-  async function deleteCampaign() {
-    const confirmed = confirm("Are you sure you want to delete this campaign?");
+  // --------------------------------------------------
+  // Delete Campaign
+  // --------------------------------------------------
 
-    if (!confirmed) return;
+  async function deleteCampaign() {
+    if (isDeleting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this campaign?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteMessage("");
 
     try {
       const response = await fetch(`/api/campaigns/${id}`, {
         method: "DELETE",
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error("Delete failed");
+        throw new Error(
+          data?.error || "Failed to delete campaign",
+        );
       }
 
-      window.location.reload();
+      /*
+       * IMPORTANT:
+       * Do NOT reload the page.
+       *
+       * Tell CampaignList to remove this campaign
+       * from its local state.
+       */
+      onDeleted?.(id);
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
+      console.error(
+        "Failed to delete campaign:",
+        error,
+      );
+
+      setDeleteMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while deleting the campaign.",
+      );
+    } finally {
+      setIsDeleting(false);
     }
   }
+
+  // --------------------------------------------------
+  // Campaign Updated
+  // --------------------------------------------------
+
+  function handleUpdated(updatedCampaign: Campaign) {
+    /*
+     * Send updated campaign back to CampaignList.
+     *
+     * CampaignList will replace the old campaign
+     * without refreshing the page.
+     */
+    onUpdated?.(updatedCampaign);
+  }
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:shadow-md">
@@ -115,10 +194,13 @@ export default function CampaignCard({
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              {brandName} <span className="mx-1">•</span> {productName}
+              {brandName}
+              <span className="mx-1">•</span>
+              {productName}
             </p>
           </div>
 
+          {/* Budget */}
           <div className="rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               Budget
@@ -134,13 +216,30 @@ export default function CampaignCard({
       {/* Campaign details */}
       <div className="px-6 py-5">
         <div className="grid gap-4 sm:grid-cols-2">
-          <InfoItem label="Campaign Goal" value={campaignGoal} />
+          <InfoItem
+            label="Campaign Goal"
+            value={campaignGoal}
+          />
 
-          <InfoItem label="Target Audience" value={targetAudience} />
+          <InfoItem
+            label="Target Audience"
+            value={targetAudience}
+          />
         </div>
+
+        {/* Delete error */}
+        {deleteMessage && (
+          <p
+            className="mt-4 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600"
+            role="alert"
+          >
+            {deleteMessage}
+          </p>
+        )}
 
         {/* Actions */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
+          {/* Edit */}
           <CreateCampaignDialog
             campaign={{
               id,
@@ -151,25 +250,39 @@ export default function CampaignCard({
               targetAudience,
               budget,
             }}
+            onSuccess={handleUpdated}
             trigger={
-              <Button variant="outline" className="border-slate-200">
+              <Button
+                variant="outline"
+                className="border-slate-200"
+                disabled={isDeleting}
+              >
                 Edit
               </Button>
             }
           />
 
-          <Button variant="destructive" onClick={deleteCampaign}>
-            Delete
+          {/* Delete */}
+          <Button
+            variant="destructive"
+            onClick={deleteCampaign}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
           </Button>
 
+          {/* Generate AI */}
           <Button
             onClick={generateAiContent}
-            disabled={isGenerating}
+            disabled={isGenerating || isDeleting}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
-            {isGenerating ? "Generating..." : "✨ Generate AI"}
+            {isGenerating
+              ? "Generating..."
+              : "✨ Generate AI"}
           </Button>
 
+          {/* Landing Page */}
           {selectedContent && (
             <Link
               href={`/campaign/${id}`}
@@ -181,7 +294,7 @@ export default function CampaignCard({
           )}
         </div>
 
-        {/* Error */}
+        {/* Generation error */}
         {generationError && (
           <p
             className="mt-4 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-600"
@@ -211,7 +324,10 @@ export default function CampaignCard({
             </div>
 
             <div className="grid gap-4 p-5">
-              <ContentField label="Headline" value={selectedContent.headline} />
+              <ContentField
+                label="Headline"
+                value={selectedContent.headline}
+              />
 
               <ContentField
                 label="Instagram Caption"
@@ -250,25 +366,31 @@ export default function CampaignCard({
 
             <div className="flex flex-wrap gap-2 p-4">
               {/* Latest */}
-              {latestContent && selectedContent?.id !== latestContent.id && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setSelectedContent(latestContent)}
-                >
-                  Latest
-                </Button>
-              )}
+              {latestContent &&
+                selectedContent?.id !== latestContent.id && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() =>
+                      setSelectedContent(latestContent)
+                    }
+                  >
+                    Latest
+                  </Button>
+                )}
 
-              {/* Previous */}
+              {/* Previous generations */}
               {aiContents.slice(1).map((content, index) => (
                 <Button
                   key={content.id}
                   variant="outline"
                   size="sm"
-                  onClick={() => setSelectedContent(content)}
+                  onClick={() =>
+                    setSelectedContent(content)
+                  }
                 >
-                  Generation {aiContents.length - index - 1}
+                  Generation{" "}
+                  {aiContents.length - index - 1}
                 </Button>
               ))}
             </div>
@@ -279,7 +401,17 @@ export default function CampaignCard({
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
+// --------------------------------------------------
+// Info Item
+// --------------------------------------------------
+
+function InfoItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
       <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -293,7 +425,17 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ContentField({ label, value }: { label: string; value: string }) {
+// --------------------------------------------------
+// Content Field
+// --------------------------------------------------
+
+function ContentField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-4">
       <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">

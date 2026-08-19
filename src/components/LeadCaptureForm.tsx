@@ -41,17 +41,6 @@ export default function LeadCaptureForm({
         throw new Error(data.error || "Unable to submit your details");
       }
 
-      await fetch("/api/analytics/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          campaignId,
-          eventType: "LEAD_CAPTURE",
-        }),
-      });
-
       form.reset();
       setIsSuccess(true);
       setMessage(`Thanks for your interest in ${brandName}!`);

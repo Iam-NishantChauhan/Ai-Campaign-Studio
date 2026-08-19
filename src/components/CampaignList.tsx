@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CampaignCard from "./CampaignCard";
 import CreateCampaignDialog from "./CreateCampaignDialog";
 import { Button } from "./ui/button";
@@ -10,39 +10,78 @@ export default function CampaignList() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch("/api/campaigns")
-      .then(async (response) => {
-        if (response.status === 401) {
-          return [];
-        }
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch campaigns");
-        }
-
-        return (await response.json()) as Campaign[];
-      })
-      .then((data) => {
-        if (!cancelled) {
-          setCampaigns(data);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to fetch campaigns:", error);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      const response = await fetch("/api/campaigns", {
+        cache: "no-store",
       });
 
-    return () => {
-      cancelled = true;
-    };
+      if (response.status === 401) {
+        setCampaigns([]);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch campaigns");
+      }
+
+      const data = (await response.json()) as Campaign[];
+
+      setCampaigns(data);
+    } catch (error) {
+      console.error("Failed to fetch campaigns:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    // Initial campaign load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchCampaigns();
+  }, [fetchCampaigns]);
+
+  /**
+   * Called after CREATE.
+   *
+   * Adds the newly created campaign directly
+   * to the current UI without reloading the page.
+   */
+  function handleCampaignCreated(campaign: Campaign) {
+    setCampaigns((currentCampaigns) => [
+      campaign,
+      ...currentCampaigns,
+    ]);
+  }
+
+  /**
+   * Called after UPDATE.
+   *
+   * Replaces only the updated campaign in the
+   * current UI.
+   */
+  function handleCampaignUpdated(updatedCampaign: Campaign) {
+    setCampaigns((currentCampaigns) =>
+      currentCampaigns.map((campaign) =>
+        campaign.id === updatedCampaign.id
+          ? updatedCampaign
+          : campaign,
+      ),
+    );
+  }
+
+  /**
+   * Called after DELETE.
+   *
+   * Removes only the deleted campaign from the UI.
+   */
+  function handleCampaignDeleted(campaignId: string) {
+    setCampaigns((currentCampaigns) =>
+      currentCampaigns.filter(
+        (campaign) => campaign.id !== campaignId,
+      ),
+    );
+  }
 
   if (loading) {
     return (
@@ -69,6 +108,7 @@ export default function CampaignList() {
         </div>
 
         <CreateCampaignDialog
+          onSuccess={handleCampaignCreated}
           trigger={
             <Button className="bg-indigo-600 text-white hover:bg-indigo-700">
               + Create Campaign
@@ -92,6 +132,7 @@ export default function CampaignList() {
 
             <div className="mt-6">
               <CreateCampaignDialog
+                onSuccess={handleCampaignCreated}
                 trigger={
                   <Button className="bg-indigo-600 text-white hover:bg-indigo-700">
                     Create your first campaign
@@ -115,6 +156,8 @@ export default function CampaignList() {
           targetAudience={campaign.targetAudience}
           budget={campaign.budget}
           initialAiContents={campaign.aiContents}
+          onUpdated={handleCampaignUpdated}
+          onDeleted={handleCampaignDeleted}
         />
       ))}
     </div>
