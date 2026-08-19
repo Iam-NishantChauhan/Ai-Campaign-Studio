@@ -50,13 +50,14 @@ export default function DashboardPage() {
         method: "POST",
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        console.error("Logout failed");
+        return;
+      }
 
-      alert(data.message);
       router.push("/login");
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
     }
   };
 
